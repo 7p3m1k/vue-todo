@@ -1,48 +1,82 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
+  <h1>TODO-LIST</h1>
+  <div>할일 : {{todoList.length}}</div>
+  <div>
+    <div>
+      <input type="text" placeholder="할 일 추가" v-model="todo" @keyup.enter="addTodo"/>
+      <button @click="addTodo">추가</button>
+    </div>
     <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
+      <li v-for="(todo,index) in todoList" :key="index">
+        <input type="checkbox" v-model="todo.done" />
+        <span v-bind:class="{active : todo.done}">{{todo.text}}</span>
+        <button @click="remove(todo,index)">삭제</button>
+      </li>
     </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+    <button @click="removeCheck">선택 삭제</button>
   </div>
 </template>
 
 <script>
+import { ref,reactive,onMounted,watchEffect} from 'vue'
 export default {
   name: 'HelloWorld',
-  props: {
-    msg: String
+
+  setup(effect, options){
+    let todo = ref('');
+    let todoList = reactive([]);
+
+    const addTodo = () => {
+      if(todo.value !== ''){
+        todoList.push({
+          done:false,
+          text: todo.value,
+        })
+        console.log(todo)
+        todo.value = '';
+      }
+      console.log(todoList, 'todolist');
+    }
+
+    const remove = (e,i) => {
+      if(e.done){
+        todoList.splice(i,1)
+      }else {
+        alert('삭제를 원하시면 체크 해주세요.')
+      }
+    }
+
+    const removeCheck=()=>{
+      todoList = todoList.filter(e => {return e.done !== true})
+      console.log(todoList)
+    }
+
+    onMounted(()=> {
+      if(localStorage.getItem('todoList')){
+
+        this.todoList = JSON.parse(localStorage.getItem('todoList'))
+      }else{
+        this.todoList = []
+      }
+    })
+
+    watchEffect(todoList, (newData, prevData) => {
+      console.log('감지', newData, prevData)
+      console.log('newAge', newData, '에프터todoList', prevData)
+      //
+      localStorage.setItem('todoList', JSON.stringify(prevData));
+
+    }, {immediate: true})
+
+    return {todo,addTodo,todoList,remove,removeCheck}
   }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
+h1 {
+  color: blue;
 }
 ul {
   list-style-type: none;
@@ -52,7 +86,8 @@ li {
   display: inline-block;
   margin: 0 10px;
 }
-a {
-  color: #42b983;
+.active {
+  color: red;
+  text-decoration: line-through;
 }
 </style>
